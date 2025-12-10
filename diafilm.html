@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diafilmek - Kicsiknek és Nagyoknak</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #1a1a2e;
+            --bg-medium: #16213e;
+            --accent-gold: #e8b923;
+            --accent-orange: #ff6b35;
+            --accent-red: #c41e3a;
+            --text-light: #f5f5f5;
+            --text-muted: #a0a0a0;
+            --card-bg: #0f0f23;
+            --card-hover: #1f1f3a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: var(--bg-dark);
+            min-height: 100vh;
+            color: var(--text-light);
+            overflow-x: hidden;
+        }
+
+        /* Animated film grain overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Film strip borders */
+        .film-border {
+            position: fixed;
+            background: repeating-linear-gradient(
+                180deg,
+                var(--bg-medium) 0px,
+                var(--bg-medium) 20px,
+                transparent 20px,
+                transparent 25px,
+                var(--bg-medium) 25px,
+                var(--bg-medium) 45px,
+                #000 45px,
+                #000 55px
+            );
+            width: 40px;
+            height: 100%;
+            top: 0;
+            z-index: 100;
+        }
+
+        .film-border.left {
+            left: 0;
+            border-right: 3px solid #333;
+        }
+
+        .film-border.right {
+            right: 0;
+            border-left: 3px solid #333;
+        }
+
+        .film-holes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .film-holes::before {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: repeating-linear-gradient(
+                180deg,
+                transparent 0px,
+                transparent 10px,
+                #000 10px,
+                #000 40px,
+                transparent 40px,
+                transparent 55px
+            );
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 80px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-top: 20px;
+        }
+
+        .header-icon {
+            font-size: 4em;
+            margin-bottom: 10px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 4em;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-orange) 50%, var(--accent-red) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
+            letter-spacing: 8px;
+            margin-bottom: 10px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 10px rgba(232, 185, 35, 0.3)); }
+            to { filter: drop-shadow(0 0 20px rgba(232, 185, 35, 0.5)); }
+        }
+
+        .header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8em;
+            color: var(--text-muted);
+            font-weight: 400;
+            font-style: italic;
+            letter-spacing: 4px;
+        }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 25px 40px;
+            background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg-medium) 100%);
+            border-radius: 20px;
+            border: 1px solid rgba(232, 185, 35, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(232, 185, 35, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .stat-item:hover::before {
+            left: 100%;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-gold);
+            box-shadow: 0 10px 40px rgba(232, 185, 35, 0.2);
+        }
+
+        .stat-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5em;
+            font-weight: 700;
+            color: var(--accent-gold);
+            display: block;
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 1em;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Search */
+        .search-container {
+            max-width: 600px;
+            margin: 40px auto;
+            position: relative;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 20px 30px 20px 60px;
+            font-size: 1.1em;
+            font-family: 'Nunito', sans-serif;
+            background: var(--card-bg);
+            border: 2px solid rgba(232, 185, 35, 0.3);
+            border-radius: 50px;
+            color: var(--text-light);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-box::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-box:focus {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 30px rgba(232, 185, 35, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.3em;
+            color: var(--accent-gold);
+        }
+
+        /* Intro text */
+        .intro-text {
+            text-align: center;
+            font-size: 1.2em;
+            color: var(--text-muted);
+            margin: 30px 0;
+            font-style: italic;
+        }
+
+        /* Grid */
+        .diafilm-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        /* Cards */
+        .diafilm-card {
+            background: linear-gradient(180deg, var(--card-bg) 0%, #0a0a18 100%);
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .diafilm-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-gold), var(--accent-orange), var(--accent-red));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .diafilm-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            border-color: rgba(232, 185, 35, 0.3);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.4),
+                0 0 60px rgba(232, 185, 35, 0.1);
+        }
+
+        .diafilm-card:hover::before {
+            opacity: 1;
+        }
+
+        .diafilm-image-container {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .diafilm-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .diafilm-card:hover .diafilm-image {
+            transform: scale(1.1);
+        }
+
+        .diafilm-image-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            pointer-events: none;
+        }
+
+        .play-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 60px;
+            height: 60px;
+            background: rgba(232, 185, 35, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+            z-index: 10;
+        }
+
+        .play-icon::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 18px solid var(--bg-dark);
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+            margin-left: 4px;
+        }
+
+        .diafilm-card:hover .play-icon {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .diafilm-info {
+            padding: 20px;
+        }
+
+        .diafilm-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15em;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 12px;
+            line-height: 1.4;
+            transition: color 0.3s ease;
+        }
+
+        .diafilm-card:hover .diafilm-title {
+            color: var(--accent-gold);
+        }
+
+        .diafilm-number {
+            font-size: 0.85em;
+            color: var(--accent-gold);
+            background: rgba(232, 185, 35, 0.1);
+            padding: 6px 14px;
+            border-radius: 20px;
+            display: inline-block;
+            border: 1px solid rgba(232, 185, 35, 0.3);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 80px;
+            padding: 40px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+        }
+
+        .footer-icon {
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .film-border {
+                display: none;
+            }
+            .container {
+                padding: 30px 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5em;
+                letter-spacing: 4px;
+            }
+            
+            .header h2 {
+                font-size: 1.2em;
+            }
+            
+            .stats {
+                gap: 20px;
+            }
+            
+            .stat-item {
+                padding: 20px 30px;
+            }
+            
+            .stat-number {
+                font-size: 2.5em;
+            }
+            
+            .diafilm-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 20px;
+            }
+        }
+
+        /* Loading animation for cards */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .diafilm-card {
+            animation: fadeInUp 0.6s ease forwards;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="film-border left"><div class="film-holes"></div></div>
+    <div class="film-border right"><div class="film-holes"></div></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="header-icon">🎬</div>
+            <h1>DIAFILMEK</h1>
+            <h2>kicsiknek — nagyoknak</h2>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-number">303</span>
+                <span class="stat-label">Diafilm</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">✨</span>
+                <span class="stat-label">Offline elérhető</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">🎞️</span>
+                <span class="stat-label">Nosztalgia</span>
+            </div>
+        </div>
+
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-box" placeholder="Keresés a mesék között..." id="searchInput">
+        </div>
+
+        <p class="intro-text">Kattints a képekre a mesék megtekintéséhez!</p>
+
+        <div class="diafilm-grid" id="diafilmGrid">
+            <!-- Cards will be generated by JavaScript -->
+        </div>
+
+        <div class="footer">
+            <div class="footer-icon">🎥</div>
+            <p>Magyar diafilm gyűjtemény — Offline elérhető</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">A gyermekkor varázsát őrizve</p>
+        </div>
+    </div>
+
+    <script>
+        // Complete list of all 303 diafilms
+        const allDiafilms = [
+            "A bagdadi tolvaj", "A császár új ruhája", "A csavargó bocs", "A kanász", "A két bors ökröcske",
+            "A kiskakas gyémánt félkrajcárja", "A kis Mukk története", "A molnár, a fia meg a szamár", "A telhetetlen méhecske", "A török és a tehenek",
+            "Ali Baba és a negyven rabló", "Az almafácska meséje", "Babszem Jankó", "Bébe Baba a játékboltban", "Bébe Baba a papírkosárban",
+            "Bébe és a horgászbot", "Bodri, meg a többiek", "Boribon és a 7 lufi", "Buksi", "Csipkerózsika",
+            "A csizmás kandúr", "Egér és az oroszlán", "Én és a testvérkém", "Frakk és a lusta macskák", "Furfangos Nyuszkó",
+            "Hamupipőke", "Hófehérke és a hét törpe", "A hókirálynő", "Jancsi és Juliska", "Kismalac meg a farkasok",
+            "Mazsola, a fodrász", "Mazsola fürdik", "Mesebeli nyúlországban", "Münchhausen báró kalandjai", "Nyuszi Kata lakodalma",
+            "Nyuszi Pista kalandjai", "Óvoda az őserdőben", "Öreg néne őzikéje", "Piroska és a farkas", "Pifike és Rőfike",
+            "Róka Rudi a Balatonon", "Róka Rudi a cirkuszban", "Róka, medve és a szegényember", "Sicc a cirkuszban", "Sicc Afrikában",
+            "Sicc az iskolában", "Tapsi és a villanyrendőr", "Vuk", "Zengő A B C", "Jó szelet kapitány!",
+            "Egy hűtlen kutya kalandjai Ugatániában", "Egy kis borz története", "Előkelő utasok", "Pétyi és pajtásai", "Rege a csodaszarvasról",
+            "A néhai bárány", "A kincses barlang", "Cikk-cakkban a Föld körül helikopteren", "Párducok és galambok harca", "Robin Hood",
+            "Londoni diadal 6:3", "Hajrá Fradi", "A Titkos őrs naplója", "Barkácsoló Ferke", "Ütközet a krumpliföldön",
+            "Üdöz ellenségünk a kulák", "Aki a népnek vermet ás", "A mi falunk lesz az első", "Amit az alkoholról tudni kell...", "Szűcs Dani álma",
+            "A kis dobos", "Nagyerejű János", "Jancsi, a csacsi", "Az aranyfánkocska", "Pöttöm Panna",
+            "A kiskakas gyémánt félkrajcárja 1975", "Rosszcsont cica", "Biztos gyógymod", "Mézeske és Árnyaska", "Az elefántkólyok",
+            "János vitéz 1952", "János vitéz 1963 I-III rész", "Az eltévedt kiscsibe", "Mérges mackó póruljár", "Mese az aranykakasról 1963",
+            "Vackor az óvodában", "Cárna Peti", "A nagyhatalmú sündisznócska", "Négy szerencsés flótás", "Dia Dani kalandja a gépemberrel",
+            "A világ legrosszabb gyereke", "Lesipuskás", "Az aranyantilop", "Sicc Meseországban", "Állatkerti útmutató",
+            "Dorottya", "A bűvös kép", "Libafarsang", "A bölcs király", "Pity és Paty meg a tavasz",
+            "Mese a legokosabb nyúlról", "Piroska és a farkas 1955", "Piroska és a farkas 1956", "Piroska és a farkas 1983", "A gólyakalifa",
+            "Három kis törpe", "A fehérorrú mókuska", "Robinson", "A hét napjainak meséje", "Torkos nyuszi",
+            "A sárkányölő", "Pálcika Péter", "A kicsi dió", "Süsü, a sárkány", "Az igazi barátság",
+            "A pórulját róka", "Ludas Matyi 1954", "Ludas Matyi 1970", "Ludas Matyi 1988", "Az üstötő inas",
+            "Hányj-el-vesd-el Gyurka", "Altató", "Kókójszi és Bobojsza", "A cár és a madár", "Mese az aranykakasról 1954",
+            "3 kívánság", "A kincses sziget", "Naphívogató", "A nyúlóvoda vendégei", "Békakirályfi",
+            "A Nagy Medve fiai", "Mese az öt kis kínairól", "A három nyíl", "Nagyvilág a kislakásban", "A part alatt",
+            "Mese a halászról és a kis halról 1955", "Apa barkácsol", "Egy ceruza kalandjai", "Mese a halászról meg a kis halról 1981", "A csodaautó",
+            "Boci, cica, kiscsikó", "A kolozsvári bíró esete", "Játékos mechanikai kísérletek", "A rút kiskacsa", "Kati és a kismedvék",
+            "Borka játékországban", "Állatok és kicsinyeik", "Bolondfalva", "A csuka parancsára", "Őserdő mélyén",
+            "A csalogány", "Babaváros", "A szél meg a nap", "A kilenc csodaszarvas", "Mátyás király Gömörben",
+            "Pincérfrakk utcai cicák", "Spartacus", "Tündér Ilona", "Vitaest a könyvespolcon", "A halász és a szellem",
+            "Péter és a fehér galamb", "Légy jó mindhalálig", "Hüvelyk Matyi 1955", "Hüvelyk Matyi 1979", "Misi mókus",
+            "Jancsi és Juliska mézeskalácsházikója", "Kutya-tár", "Hova futsz te kicsi őz?", "Mese a bátor nyusziról", "Hétvégi kirándulás",
+            "Kicsi Jankó szerencséje", "Nem fog fájni", "Jelky András kalandjai", "Mister Twister", "Sán Balázs",
+            "Apja fia", "A didergő király 1958", "A didergő király 1975", "Mézes Vilibáld", "Télapó szánkója",
+            "Ki hol lakik?", "Vidám kis mesék", "Pinokkió kalandjai", "Utazás a Holdba 2111-ben I-II rész", "Muki és Maki",
+            "Tamás bátya kunyhója", "A bűvös szekrény", "Mese a szürke gidáról", "Szépségverseny az erdőben", "Két kicsi kacsapásztor",
+            "Sztyopa bácsi", "Kacor király", "Iciri-Piciri 1975", "Iciri-Piciri 1982", "Róka Rudi, a falurossza",
+            "Féles repül", "Csipkerózsika 1952", "Hárman a Holdban", "Hárman Atlantiszban", "Fanyüvő, Vasgyűrű és Hegyhengetgetű",
+            "Csodamalmocska", "Hogyan győzte le a nyuszi az elefántot?", "Csalóka Péter", "A gonosz hattyúk", "Suttog a fenyves",
+            "Gulliver az óriások országában", "Holle anyó", "Szegény János és a gazdag molnár", "Kapzsi macska", "Az aranyszőrű bárányka",
+            "Gabi karácsonya", "Képek a magyar történelemből", "Húsvéti tojások", "Dugó Dúr-Moll és a beszélő kosár", "3 állatmese",
+            "Sanyi manó és Huhu varázsló", "Toldi", "A világba ment csacsi és bari", "Róma királyfi", "Zsuzsi segít anyukának",
+            "Lusta Csehő", "A lángban álló szigettenger I-II rész", "Hóember Tóni", "Felelj rá! Állatos képeskönyv", "Magyar angol 7:1",
+            "Eb, aki a kanalát meg nem eszi", "A répa", "Egyszer volt Budán kutyavásár", "Hivatlan vendég", "Vadálló",
+            "Anyu, végy egy hegyet nékem", "Ennyi az egész!", "Érdekes fénytani kísérletek", "Esőcseppecskék", "Sólyomszem a bátor indián",
+            "A király kenyere", "Kecskegidák meg a farkas", "Aranyhaj", "Az aranyember I-II rész", "Csali mese",
+            "Üsséd, üsséd, botocskám!", "A holló és a róka", "A holló meg a róka", "Az okos lány", "Egészséges, mint a makk",
+            "Monte Cristo grófja", "Betlehemi királyok", "Szeleburdi Róka Rudi", "Bajusz", "Egri csillagok I-II rész",
+            "A dzsungel meséje", "Égből pottyant vendég", "A táltos vitéz", "Cikicakk, a fekete cica", "Vince nem hábortos",
+            "A vadhattyúk I-II rész", "Zrínyi Ilona", "A sínik és a csúnya kislány", "Tájfun-repülők", "A szegényember királysága",
+            "Gulliver Lilliputban", "A mackó és a kiskutya", "Jankó kisasszony", "A bűvös tűzszerszám", "Koldus és királyfi",
+            "Télapó és Ezüstmackó", "Báró Károly hagyatéka", "Az égig érő paszuly", "Maugli, a farkasok fia", "A tücsök és a hangya",
+            "Ben Hur", "Makk Marci kirándus", "Makk Marci közbelép", "A tehervonat titka", "Kalózok a tengeren",
+            "Az ébenfa ló", "A nagyravágyó feketerigó", "Láthatatlan ember", "A csillagszemű juhász", "Az engedetlen kisfiú",
+            "Ember a világűrben", "A varázsbögre", "Az égig érő fa", "Mese is meg nem is", "A pap, meg a szolgája",
+            "Alvótársak", "Vízilé a Vidámparkban", "A teknősbéka és a nyúl", "Vihar Itália felett", "A fából faragott királyfi",
+            "A szirakuzai óriás", "Gyöngyvirág Palkó", "Az eltévedt kiscica", "Első nap az óvodában", "A világszép kecskebéka",
+            "A karvalyos zászló", "Egyszer egy királyfi", "Az aranykoporsó", "Kistestvér érkezik", "Csongor és Tünde",
+            "Boribon a játékmackó", "Állatkerti séta", "Falusi hangverseny"
+        ];
+
+        // Function to generate diafilm cards
+        function generateDiafilmCards() {
+            const grid = document.getElementById('diafilmGrid');
+            
+            for (let i = 0; i < allDiafilms.length; i++) {
+                const num = String(i + 1).padStart(3, '0');
+                const title = allDiafilms[i];
+                
+                const card = document.createElement('div');
+                card.className = 'diafilm-card';
+                card.setAttribute('data-number', num);
+                card.setAttribute('data-title', title);
+                card.style.animationDelay = `${(i % 20) * 0.05}s`;
+                
+                card.innerHTML = `
+                    <div class="diafilm-image-container">
+                        <img src="${num}/k01.jpg" alt="${title}" class="diafilm-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22280%22 height=%22200%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%25%22 y1=%220%25%22 x2=%22100%25%22 y2=%22100%25%22%3E%3Cstop offset=%220%25%22 style=%22stop-color:%231a1a2e%22/%3E%3Cstop offset=%22100%25%22 style=%22stop-color:%2316213e%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect fill=%22url(%23g)%22 width=%22280%22 height=%22200%22/%3E%3Ctext fill=%22%23e8b923%22 font-family=%22Georgia%22 font-size=%2218%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3E🎬 Diafilm%3C/text%3E%3C/svg%3E'">
+                        <div class="play-icon"></div>
+                    </div>
+                    <div class="diafilm-info">
+                        <div class="diafilm-title">${title}</div>
+                        <div class="diafilm-number">#${num}</div>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            }
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.diafilm-card');
+            
+            cards.forEach((card, index) => {
+                const title = card.querySelector('.diafilm-title').textContent.toLowerCase();
+                if (title.includes(searchTerm)) {
+                    card.style.display = 'block';
+                    card.style.animationDelay = `${(index % 20) * 0.03}s`;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            generateDiafilmCards();
+            
+            // Click handler
+            document.getElementById('diafilmGrid').addEventListener('click', function(e) {
+                const card = e.target.closest('.diafilm-card');
+                if (card) {
+                    const num = card.getAttribute('data-number');
+                    
+                    if (num) {
+                        const folderNum = num;
+                        const numInt = parseInt(num);
+                        let fileNum;
+                        if (numInt <= 70) {
+                            fileNum = numInt < 10 ? '0' + numInt : numInt.toString();
+                        } else {
+                            fileNum = num;
+                        }
+                        window.open(`${folderNum}/${fileNum}.html`, '_blank');
+                    }
+                    
+                    // Visual feedback
+                    card.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        card.style.transform = '';
+                    }, 200);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
